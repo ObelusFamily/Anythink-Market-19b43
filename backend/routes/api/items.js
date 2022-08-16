@@ -53,6 +53,10 @@ router.get("/", auth.optional, function (req, res, next) {
     if (typeof req.query.tag !== "undefined") {
         query.tagList = {$in: [req.query.tag]};
     }
+    
+    if (typeof req.query.title !== "undefined") {
+        query.title = new RegExp(req.query.title);
+    }
 
     Promise.all([
         req.query.seller ? User.findOne({username: req.query.seller}) : null,
@@ -171,31 +175,31 @@ router.get("/:item", auth.optional, function (req, res, next) {
         .catch(next);
 });
 
-// return a list of items
-router.get("/items", auth.optional, function (req, res, next) {
-    let query = {}
-
-    if (typeof req.query.title !== "undefined") {
-        query.title = new RegExp(req.query.title);
-    }
-
-    return Promise.all(
-        Item.find(query).exec(),
-        req.payload ? User.findById(req.payload.id) : null
-    ).then(async function (results) {
-        var items = results[0];
-        var user = results[1];
-
-        return res.json({
-            items: await Promise.all(
-                items.map(async function (item) {
-                    item.seller = await User.findById(item.seller);
-                    return item.toJSONFor(user);
-                })
-            ),
-        })
-    }).catch(next);
-});
+// // return a list of items
+// router.get("/items", auth.optional, function (req, res, next) {
+//     let query = {}
+//
+//     if (typeof req.query.title !== "undefined") {
+//         query.title = new RegExp(req.query.title);
+//     }
+//
+//     return Promise.all(
+//         Item.find(query).exec(),
+//         req.payload ? User.findById(req.payload.id) : null
+//     ).then(async function (results) {
+//         var items = results[0];
+//         var user = results[1];
+//
+//         return res.json({
+//             items: await Promise.all(
+//                 items.map(async function (item) {
+//                     item.seller = await User.findById(item.seller);
+//                     return item.toJSONFor(user);
+//                 })
+//             ),
+//         })
+//     }).catch(next);
+// });
 
 // update item
 router.put("/:item", auth.required, function (req, res, next) {
