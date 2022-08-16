@@ -180,19 +180,13 @@ router.get("/items", auth.optional, function (req, res, next) {
     ]).then(function (results) {
         var user = results[0]
 
-        var title = req.query.title
+        var itemTitle = req.query.title
         Item.find().exec((err, queryItems) => {
             if (err) next();
-            var filteredItems = queryItems.filter(e => e.title === req.query.title)
+            var filteredItems = queryItems.filter(e => e.title.includes(itemTitle))
 
             return res.json({items: filteredItems.map((e) => e.toJSON())})
         })
-
-        Item.findOne({'title': title}).exec((err, newItem) => {
-            if (err) next();
-
-            return res.json({item: newItem.toJSONFor(user)})
-        });
     }).catch(next);
 
 });
