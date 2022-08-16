@@ -173,12 +173,27 @@ router.get("/:item", auth.optional, function (req, res, next) {
 
 // return a list of items
 router.get("/items", auth.optional, function (req, res, next) {
-    Promise.all(
-        Item.find({title: {"$regex": req.query.title, "$options": "i"}})
-    ).then(function (results) {
-        var items = results.map((e) => e.toJSON());
+    let query = {}
 
-        return res.json({items: items})
+    if (typeof req.query.title !== "undefined") {
+        query.title = new RegExp(req.query.title);
+    }
+
+    return Promise.all(
+        Item.find(query).exec(),
+        req.payload ? User.findById(req.payload.id) : null
+    ).then(async function (results) {
+        var items = results[0];
+        var user = results[1];
+
+        return res.json({
+            items: await Promise.all(
+                items.map(async function (item) {
+                    item.seller = await User.findById(item.seller);
+                    return item.toJSONFor(user);
+                })
+            ),
+        })
     }).catch(next);
 });
 
