@@ -173,22 +173,13 @@ router.get("/:item", auth.optional, function (req, res, next) {
 
 // return a list of items
 router.get("/items", auth.optional, function (req, res, next) {
-    console.log("This is running");
-    Promise.all([
-        req.payload ? User.findById(req.payload.id) : null,
-        req.item.populate("seller").execPopulate()
-    ]).then(function (results) {
-        var user = results[0]
+    Promise.all(
+        Item.find({title: {"$regex": req.query.title, "$options": "i"}})
+    ).then(function (results) {
+        var items = results.map((e) => e.toJSON());
 
-        var itemTitle = req.query.title
-        Item.find().exec((err, queryItems) => {
-            if (err) next();
-            var filteredItems = queryItems.filter(e => e.title.includes(itemTitle))
-
-            return res.json({items: filteredItems.map((e) => e.toJSON())})
-        })
+        return res.json({items: items})
     }).catch(next);
-
 });
 
 // update item
